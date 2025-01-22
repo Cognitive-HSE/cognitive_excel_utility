@@ -11,35 +11,36 @@ namespace Cognitive.ExcelUtility
         private static XSSFWorkbook _workbook = new XSSFWorkbook();
         private static ISheet _sheet = _workbook.CreateSheet("Report");
 
+        #region User Readable Report
+
         public static async Task<IWorkbook> CreateUserReadableReport()
         {
-            var headerTestData = await GetHeaderNames();
+            var headerNames = await GetHeaderNames();
             IRow[] headerRows = { _sheet.CreateRow(0), _sheet.CreateRow(1) };
-            
-            for (int i = 0; i < headerTestData.Count; i++)
-            {
-                var startRegionCol = 1 + i * 5;
-                headerTestData[i].StartRegionCol = startRegionCol;
-                headerRows[0].CreateAndWriteCell(startRegionCol, headerTestData[i].TestName, CellStyleHeader);
-                _sheet.AddMergedRegion(new CellRangeAddress(0, 0, startRegionCol, startRegionCol + 4));
-
-                headerRows[1].CreateAndWriteCell(startRegionCol + 0, "#", CellStyleHeader);
-                headerRows[1].CreateAndWriteCell(startRegionCol + 1, "% выполнения", CellStyleHeader);
-                headerRows[1].CreateAndWriteCell(startRegionCol + 2, "Время выполнения", CellStyleHeader);
-                headerRows[1].CreateAndWriteCell(startRegionCol + 3, headerTestData[i].TitleCorrect, CellStyleHeader);
-                headerRows[1].CreateAndWriteCell(startRegionCol + 4, headerTestData[i].TitleAll, CellStyleHeader);
-
-                _sheet.SetColumnWidth(startRegionCol + 0, 3 * 256);
-                _sheet.SetColumnWidth(startRegionCol + 1, 12 * 256);
-                _sheet.SetColumnWidth(startRegionCol + 2, 12 * 256);
-                _sheet.SetColumnWidth(startRegionCol + 3, 20 * 256);
-                _sheet.SetColumnWidth(startRegionCol + 4, 20 * 256);
-            }
-
             _sheet.CreateFreezePane(1, 2);
 
-            var data = await GetDetalisedData();
-            var rownum = 2;
+            // Сборка шапки юзеров
+            headerRows[0].CreateAndWriteCell(0, "ИД пользователя", CellStyleHeader, 15);
+            _sheet.AddMergedRegion(new CellRangeAddress(0, 1, 0, 0));
+
+            // Сборка шапки тестов
+            for (int i = 0; i < headerNames.Count; i++)
+            {
+                var startRegionCol = 1 + i * 5; // 1 == количество столбцов с инфой о юзерах
+                headerNames[i].StartRegionCol = startRegionCol;
+                headerRows[0].CreateAndWriteCell(startRegionCol, headerNames[i].TestName, CellStyleHeader);
+                _sheet.AddMergedRegion(new CellRangeAddress(0, 0, startRegionCol, startRegionCol + 4));
+
+                headerRows[1].CreateAndWriteCell(startRegionCol + 0, "#", CellStyleHeader, 3);
+                headerRows[1].CreateAndWriteCell(startRegionCol + 1, "% выполнения", CellStyleHeader, 12);
+                headerRows[1].CreateAndWriteCell(startRegionCol + 2, "Время выполнения", CellStyleHeader, 12);
+                headerRows[1].CreateAndWriteCell(startRegionCol + 3, headerNames[i].TitleCorrect, CellStyleHeader, 20);
+                headerRows[1].CreateAndWriteCell(startRegionCol + 4, headerNames[i].TitleAll, CellStyleHeader, 20);
+            }
+
+            // Наполнение таблицы
+            var data = await GetTestResults();
+            var rownum = 2; // 2 == высота шапки
 
             foreach (var user in data.GroupBy(el => el.UserId))
             {
@@ -54,7 +55,7 @@ namespace Cognitive.ExcelUtility
                     }
 
                     foreach (var testRes in testTry)
-                        WriteTestResult(row, headerTestData.FirstOrDefault(el => el.TestId == testRes.TestId).StartRegionCol, testRes);
+                        WriteTestResult(row, headerNames.FirstOrDefault(el => el.TestId == testRes.TestId).StartRegionCol, testRes);
                 }
                 
                 if (rowsCreated > 1)
@@ -75,12 +76,14 @@ namespace Cognitive.ExcelUtility
             row.CreateAndWriteCell(startCol + 4, item.NumberAllAnswers);
         }
 
-        public static async Task<IWorkbook> CreateDetalisedReport()
+        #endregion
+
+        public static async Task<IWorkbook> CreateReportForTraining()
         {
             var workbook = new XSSFWorkbook();
             var sheet = workbook.CreateSheet("report");
 
-            var data = await GetDetalisedData();
+            var data = await GetTestResults();
 
             var rownum = 0;
             foreach (var item in data)
@@ -118,7 +121,7 @@ namespace Cognitive.ExcelUtility
 
         #region GetData
 
-        private static async Task<List<TestResultEntity>> GetDetalisedData()
+        private static async Task<List<TestResultEntity>> GetTestResults()
         {
             return await new TestResultManager().ReadAll();
         }
@@ -132,7 +135,15 @@ namespace Cognitive.ExcelUtility
 
         #region Private
 
-        private static void CreateAndWriteCell(this IRow row, int colnum, object? val, ICellStyle? style = null)
+        /// <summary>
+        /// Создает и пишет ячейку
+        /// </summary>
+        /// <param name="row">Строка для записи</param>
+        /// <param name="colnum">Номер колонки</param>
+        /// <param name="val">Значение</param>
+        /// <param name="style">Стиль ячейки</param>
+        /// <param name="colWidth">Ширина столбца</param>
+        private static void CreateAndWriteCell(this IRow row, int colnum, object? val, ICellStyle? style = null, int? colWidth = null)
         {
             if (val == null) return;
 
@@ -149,8 +160,12 @@ namespace Cognitive.ExcelUtility
             if (val is string s)
             {
                 cell.SetCellValue(s);
+            } else
+            {
+                cell.SetCellValue(val.ToString());
             }
 
+            if (colWidth != null) _sheet.SetColumnWidth(colnum, colWidth.Value * 256);
             if (style != null) cell.CellStyle = style;
         }
 
