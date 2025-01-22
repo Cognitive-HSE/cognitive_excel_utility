@@ -7,7 +7,7 @@ namespace Cognitive.ExcelUtility
         static void Main(string[] args)
         {
             Console.WriteLine("Hello, World!");
-            var workbook = ExcelBuilder.CreateDetalisedReport().Result;
+            var workbook = ExcelBuilder.CreateUserReadableReport().Result;
             using (FileStream fileStream = new FileStream("C:\\Users\\x1larus\\Desktop\\file.xlsx", FileMode.Create))
             {
                 workbook.Write(fileStream);
