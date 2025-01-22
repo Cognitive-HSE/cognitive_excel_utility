@@ -62,7 +62,7 @@ namespace Cognitive.ExcelUtility
                     }
 
                     foreach (var testRes in testTry)
-                        WriteTestResult(row, headerNames.FirstOrDefault(el => el.TestId == testRes.TestId).StartRegionCol, testRes);
+                        WriteTestResult(row, headerNames.First(el => el.TestId == testRes.TestId).StartRegionCol, testRes);
                 }
                 
                 if (rowsCreated > 1)
