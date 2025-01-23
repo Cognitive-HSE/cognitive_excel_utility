@@ -1,7 +1,8 @@
 {
   "profiles": {
     "Cognitive.ExcelUtility": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "--dev"
     },
     "WSL": {
       "commandName": "WSL2",

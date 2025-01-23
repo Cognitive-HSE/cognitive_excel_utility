@@ -1,6 +1,5 @@
 ﻿using Cognitive.ExcelUtility.DalPg.Entities;
 using Cognitive.ExcelUtility.DalPg.Managers;
-using NPOI.HSSF.Util;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
@@ -9,34 +8,51 @@ namespace Cognitive.ExcelUtility
 {
     internal static class ExcelBuilder
     {
-        private static readonly XSSFWorkbook _workbook = new XSSFWorkbook();
-        private readonly static ISheet _sheet = _workbook.CreateSheet("Report");
+        private static readonly XSSFWorkbook Workbook = new();
+        private static readonly ISheet Sheet = Workbook.CreateSheet("Report");
+
+        private const int HeaderRows = 2;
+        private const int TestInfoCols = 5;
+        private const int UserInfoCols = 15;
 
         #region User Readable Report
 
         public static async Task<IWorkbook> CreateUserReadableReport()
         {
-            const int HeaderRows = 2;
-            const int TestInfoCols = 5;
-            const int UserInfoCols = 1;
-
             var headerNames = await GetHeaderNames();
-            int overallCols = (headerNames.Count * TestInfoCols) + UserInfoCols;
+            var overallCols = (headerNames.Count * TestInfoCols) + UserInfoCols;
             
-            IRow[] headerRows = { _sheet.CreateRow(0), _sheet.CreateRow(1) };
-            _sheet.CreateFreezePane(UserInfoCols, HeaderRows);
+            IRow[] headerRows = [Sheet.CreateRow(0), Sheet.CreateRow(1)];
+            Sheet.CreateFreezePane(UserInfoCols, HeaderRows);
 
             // Сборка шапки юзеров
-            headerRows[0].CreateAndWriteCell(0, "ИД пользователя", CellStyleHeader, 15);
-            _sheet.AddMergedRegion(new CellRangeAddress(0, 1, 0, 0));
+            headerRows[0].CreateAndWriteCell(0, "ИД", CellStyleHeader, 5);
+            headerRows[0].CreateAndWriteCell(1, "Возраст", CellStyleHeader, 9);
+            headerRows[0].CreateAndWriteCell(2, "Образование", CellStyleHeader, 20);
+            headerRows[0].CreateAndWriteCell(3, "Специальность", CellStyleHeader, 20);
+            headerRows[0].CreateAndWriteCell(4, "Место жительства", CellStyleHeader, 20);
+            headerRows[0].CreateAndWriteCell(5, "Рост", CellStyleHeader, 5);
+            headerRows[0].CreateAndWriteCell(6, "Вес", CellStyleHeader, 5);
+            headerRows[0].CreateAndWriteCell(7, "Ведущая рука", CellStyleHeader, 10);
+            headerRows[0].CreateAndWriteCell(8, "Заболевания", CellStyleHeader, 15);
+            headerRows[0].CreateAndWriteCell(9, "Курение", CellStyleHeader, 9);
+            headerRows[0].CreateAndWriteCell(10, "Алкоголь", CellStyleHeader, 10);
+            headerRows[0].CreateAndWriteCell(11, "Спорт", CellStyleHeader, 15);
+            headerRows[0].CreateAndWriteCell(12, "Бессонница", CellStyleHeader, 7);
+            headerRows[0].CreateAndWriteCell(13, "Текущее самочувствие", CellStyleHeader, 15);
+            headerRows[0].CreateAndWriteCell(14, "Геймер", CellStyleHeader, 8);
+
+
+            for (var i = 0; i < UserInfoCols; i++)
+                Sheet.AddMergedRegion(new CellRangeAddress(0, 1, i, i));
 
             // Сборка шапки тестов
-            for (int i = 0; i < headerNames.Count; i++)
+            for (var i = 0; i < headerNames.Count; i++)
             {
                 var startRegionCol = UserInfoCols + i * TestInfoCols;
                 headerNames[i].StartRegionCol = startRegionCol;
                 headerRows[0].CreateAndWriteCell(startRegionCol, headerNames[i].TestName, CellStyleHeader);
-                _sheet.AddMergedRegion(new CellRangeAddress(0, 0, startRegionCol, startRegionCol + TestInfoCols - 1));
+                Sheet.AddMergedRegion(new CellRangeAddress(0, 0, startRegionCol, startRegionCol + TestInfoCols - 1));
 
                 headerRows[1].CreateAndWriteCell(startRegionCol + 0, "#", CellStyleHeader, 3);
                 headerRows[1].CreateAndWriteCell(startRegionCol + 1, "% выполнения", CellStyleHeader, 12);
@@ -47,6 +63,7 @@ namespace Cognitive.ExcelUtility
 
             // Наполнение таблицы
             var data = await GetTestResults();
+            var userData = await GetUsers();
             var rownum = 2; // 2 == высота шапки
 
             foreach (var user in data.GroupBy(el => el.UserId))
@@ -54,11 +71,12 @@ namespace Cognitive.ExcelUtility
                 var rowsCreated = 0;
                 foreach (var testTry in user.GroupBy(el => el.TryNumber))
                 {
-                    var row = _sheet.CreateRow(rownum++);
+                    var row = Sheet.CreateRow(rownum++);
                     rowsCreated++;
                     if (rowsCreated == 1)
                     {
                         row.CreateAndWriteCell(0, user.Key, CellStyleData);
+                        WriteUserData(row, 0, ref userData, user.Key);
                     }
 
                     foreach (var testRes in testTry)
@@ -67,13 +85,14 @@ namespace Cognitive.ExcelUtility
                 
                 if (rowsCreated > 1)
                 {
-                    _sheet.AddMergedRegion(new CellRangeAddress(rownum - rowsCreated, rownum - 1, 0, 0));
+                    for (var i = 0; i < UserInfoCols; i++)
+                        Sheet.AddMergedRegion(new CellRangeAddress(rownum - rowsCreated, rownum - 1, i, i));
                 }
 
                 // Рисуем горизонтальную границу между людьми
                 for (var i = 0; i < overallCols; i++)
                 {
-                    var row = _sheet.GetRow(rownum - 1);
+                    var row = Sheet.GetRow(rownum - 1);
                     var cell = row.GetOrCreateCell(i);
                     cell.DrawBorder(false);
                 }
@@ -82,7 +101,7 @@ namespace Cognitive.ExcelUtility
             // Рисуем вертикальные границы
             for (var i = 0; i < rownum; i++)
             {
-                var row = _sheet.GetRow(i);
+                var row = Sheet.GetRow(i);
 
                 for (var j = UserInfoCols - 1; j < overallCols; j += TestInfoCols)
                 {
@@ -91,7 +110,7 @@ namespace Cognitive.ExcelUtility
                 }
             }
 
-            return _workbook;
+            return Workbook;
         }
 
         private static void WriteTestResult(IRow row, int startCol, TestResultEntity item)
@@ -103,40 +122,42 @@ namespace Cognitive.ExcelUtility
             row.CreateAndWriteCell(startCol + 4, item.NumberAllAnswers, CellStyleData);
         }
 
-        #endregion
-
-        public static async Task<IWorkbook> CreateReportForTraining()
+        private static void WriteUserData(IRow row, int startCol, ref List<UserEntity> users, long? userId)
         {
-            var workbook = new XSSFWorkbook();
-            var sheet = workbook.CreateSheet("report");
-
-            var data = await GetTestResults();
-
-            var rownum = 0;
-            foreach (var item in data)
+            var item = users.FirstOrDefault(el => el.UserId == userId);
+            if (item == null)
             {
-                var row = sheet.CreateRow(rownum++);
-
-                row.CreateAndWriteCell(0, item.UserId);
-                row.CreateAndWriteCell(1, item.TestId);
-                row.CreateAndWriteCell(2, item.TryNumber);
-                row.CreateAndWriteCell(3, item.Accuracy);
-                row.CreateAndWriteCell(4, item.CompleteTime);
-                row.CreateAndWriteCell(5, item.NumberCorrectAnswers);
-                row.CreateAndWriteCell(6, item.NumberAllAnswers);
+                row.CreateAndWriteCell(startCol + 0, userId, CellStyleData);
+                return;
             }
 
-            return workbook;
+            row.CreateAndWriteCell(startCol + 0, item.UserId, CellStyleData);
+            row.CreateAndWriteCell(startCol + 1, item.Age, CellStyleData);
+            row.CreateAndWriteCell(startCol + 2, item.Education, CellStyleData);
+            row.CreateAndWriteCell(startCol + 3, item.Speciality, CellStyleData);
+            row.CreateAndWriteCell(startCol + 4, item.Residence, CellStyleData);
+            row.CreateAndWriteCell(startCol + 5, item.Height, CellStyleData);
+            row.CreateAndWriteCell(startCol + 6, item.Weight, CellStyleData);
+            row.CreateAndWriteCell(startCol + 7, item.LeadHand, CellStyleData);
+            row.CreateAndWriteCell(startCol + 8, item.Diseases, CellStyleData);
+            row.CreateAndWriteCell(startCol + 9, item.Smoking, CellStyleData);
+            row.CreateAndWriteCell(startCol + 10, item.Alcohol, CellStyleData);
+            row.CreateAndWriteCell(startCol + 11, item.Sport, CellStyleData);
+            row.CreateAndWriteCell(startCol + 12, item.Insomnia, CellStyleData);
+            row.CreateAndWriteCell(startCol + 13, item.CurrentHealth, CellStyleData);
+            row.CreateAndWriteCell(startCol + 14, item.Gaming, CellStyleData);
         }
+
+        #endregion
 
         #region Styles
 
-        private static ICellStyle CellStyleHeader = CellStyleHeaderBuild();
-        private static ICellStyle CellStyleData = CellStyleDataBuild();
+        private static readonly ICellStyle CellStyleHeader = CellStyleHeaderBuild();
+        private static readonly ICellStyle CellStyleData = CellStyleDataBuild();
 
         private static ICellStyle CellStyleHeaderBuild()
         {
-            var style = _workbook.CreateCellStyle();
+            var style = Workbook.CreateCellStyle();
 
             style.Alignment = HorizontalAlignment.Center;
             style.VerticalAlignment = VerticalAlignment.Center;
@@ -147,7 +168,7 @@ namespace Cognitive.ExcelUtility
 
         private static ICellStyle CellStyleDataBuild()
         {
-            var style = _workbook.CreateCellStyle();
+            var style = Workbook.CreateCellStyle();
 
             style.Alignment = HorizontalAlignment.Center;
             style.VerticalAlignment = VerticalAlignment.Center;
@@ -169,6 +190,11 @@ namespace Cognitive.ExcelUtility
             return await new TestNsiManager().ReadAll();
         }
 
+        private static async Task<List<UserEntity>> GetUsers()
+        {
+            return await new UserManager().ReadAll();
+        }
+ 
         #endregion
 
         #region Private
@@ -184,31 +210,31 @@ namespace Cognitive.ExcelUtility
         private static void CreateAndWriteCell(this IRow row, int colnum, object? val, ICellStyle? style = null, int? colWidth = null)
         {
             var cell = row.CreateCell(colnum);
-            if (val == null) return;
-
-            if (val is long || val is int || val is decimal || val is short)
+            switch (val)
             {
-                cell.SetCellValue(Convert.ToDouble(val));
-            } else
-            if (val is TimeSpan ts)
-            {
-                cell.SetCellValue(ts.ToString());
-            } else
-            if (val is string s)
-            {
-                cell.SetCellValue(s);
-            } else
-            {
-                cell.SetCellValue(val.ToString());
+                case null:
+                    return;
+                case long or int or decimal or short:
+                    cell.SetCellValue(Convert.ToDouble(val));
+                    break;
+                case TimeSpan ts:
+                    cell.SetCellValue(ts.ToString());
+                    break;
+                case string s:
+                    cell.SetCellValue(s);
+                    break;
+                case bool b:
+                    cell.SetCellValue(b ? "Да" : "Нет");
+                    break;
             }
 
-            if (colWidth != null) _sheet.SetColumnWidth(colnum, colWidth.Value * 256);
+            if (colWidth != null) Sheet.SetColumnWidth(colnum, colWidth.Value * 256);
             if (style != null) cell.CellStyle = style;
         }
 
         private static void DrawBorder(this ICell cell, bool right)
         {
-            var newstyle = _workbook.CreateCellStyle();
+            var newstyle = Workbook.CreateCellStyle();
             newstyle.CloneStyleFrom(cell.CellStyle);
             
             if (right) 
@@ -221,9 +247,7 @@ namespace Cognitive.ExcelUtility
 
         private static ICell GetOrCreateCell(this IRow row, int idx)
         {
-            var cell = row.GetCell(idx);
-            if (cell == null)
-                cell = row.CreateCell(idx);
+            var cell = row.GetCell(idx) ?? row.CreateCell(idx);
             return cell;
         }
 
