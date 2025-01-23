@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.IO;
+using System.Text;
 using Cognitive.ExcelUtility.DalPg.Base;
 
 namespace Cognitive.ExcelUtility
@@ -15,19 +16,19 @@ namespace Cognitive.ExcelUtility
             Console.WriteLine("Please wait while the report is generated...");
             
             var path = BuildPath(isDev, isDataset);
-            
-            using (var fileStream = new FileStream(path, FileMode.Create))
+
+            if (isDataset)
             {
-                if (isDataset)
-                {
-                    var csv = CsvBuilder.BuildDataset();
-                    var bytes = new UTF8Encoding(false).GetBytes(csv);
-                    fileStream.Write(bytes, 0, bytes.Length);
-                } else
-                {
-                    var workbook = ExcelBuilder.CreateUserReadableReport().Result;
-                    workbook.Write(fileStream);
-                }
+                var csv = CsvBuilder.BuildDataset();
+                var bytes = new UTF8Encoding(false).GetBytes(csv);
+                using var fileStream = new FileStream(path, FileMode.Create);
+                fileStream.Write(bytes, 0, bytes.Length);
+            }
+            else
+            {
+                var workbook = ExcelBuilder.CreateUserReadableReport().Result;
+                using var fileStream = new FileStream(path, FileMode.Create);
+                workbook.Write(fileStream);
             }
 
             Console.WriteLine($"The report is generated in");
