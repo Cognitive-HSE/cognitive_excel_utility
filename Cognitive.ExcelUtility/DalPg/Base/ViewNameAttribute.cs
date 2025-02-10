@@ -1,7 +1,12 @@
 ﻿namespace Cognitive.ExcelUtility.DalPg.Base
 {
-    public class ViewNameAttribute(string viewName) : Attribute
+    public class ViewNameAttribute : Attribute
     {
-        public string ViewName { get; private set; } = viewName;
+        public ViewNameAttribute(string viewName)
+        {
+            ViewName = viewName;
+        }
+
+        public string ViewName { get; private set; }
     }
 }

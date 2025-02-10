@@ -120,7 +120,7 @@ namespace Cognitive.ExcelUtility.DalPg.Base
                             $"Для поля {entityType.Name}.{p.Name} не задан сеттер");
 
                     var value = reader.GetValue(reader.GetOrdinal(colName));
-                    setMethod.Invoke(ent, [value is DBNull ? null : value]);
+                    setMethod.Invoke(ent, new[] { value is DBNull ? null : value });
                 }
                 res.Add(ent);
             }

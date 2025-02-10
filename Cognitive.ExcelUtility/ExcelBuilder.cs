@@ -22,7 +22,7 @@ namespace Cognitive.ExcelUtility
             var headerNames = await GetHeaderNames();
             var overallCols = (headerNames.Count * TestInfoCols) + UserInfoCols;
             
-            IRow[] headerRows = [Sheet.CreateRow(0), Sheet.CreateRow(1)];
+            var headerRows = new[] { Sheet.CreateRow(0), Sheet.CreateRow(1) };
             Sheet.CreateFreezePane(UserInfoCols, HeaderRows);
 
             // Сборка шапки юзеров

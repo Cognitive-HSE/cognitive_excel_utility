@@ -1,7 +1,12 @@
 ﻿namespace Cognitive.ExcelUtility.DalPg.Base
 {
-    public class ViewColumnAttribute(string columnName) : Attribute
+    public class ViewColumnAttribute : Attribute
     {
-        public string ColumnName { get; private set; } = columnName;
+        public ViewColumnAttribute(string columnName)
+        {
+            ColumnName = columnName;
+        }
+
+        public string ColumnName { get; private set; }
     }
 }

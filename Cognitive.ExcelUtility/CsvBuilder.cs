@@ -27,7 +27,7 @@ namespace Cognitive.ExcelUtility
         private static string BuildHeader()
         {
             string[] headers =
-            [
+            {
                 "user_id",
                 "age",
                 "education",
@@ -49,14 +49,14 @@ namespace Cognitive.ExcelUtility
                 "complete_time",
                 "number_correct_answers",
                 "number_all_answers"
-            ];
+            };
             return string.Join(';', headers);
         }
 
         private static string BuildLine(UserEntity? user, TestResultEntity test)
         {
             string?[] line =
-            [
+            {
                 user?.UserId.ToString(),
                 user?.Age.ToString(),
                 user?.Education,
@@ -78,7 +78,7 @@ namespace Cognitive.ExcelUtility
                 test.CompleteTime.ToCsvFormat(),
                 test.NumberCorrectAnswers.ToString(),
                 test.NumberAllAnswers.ToString()
-            ];
+            };
 
             return string.Join(';', line).ToString(CultureInfo.InvariantCulture);
         }
