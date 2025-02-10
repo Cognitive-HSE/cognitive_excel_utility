@@ -12,10 +12,10 @@
         public string? LeadHand { get; set; }
         public string? Diseases { get; set; }
         public bool? Smoking { get; set; }
-        public bool? Alcohol { get; set; }
+        public string? Alcohol { get; set; }
         public string? Sport { get; set; }
         public bool? Insomnia { get; set; }
-        public string? CurrentHealth { get; set; }
+        public short? CurrentHealth { get; set; }
         public bool? Gaming { get; set; }
     }
 }

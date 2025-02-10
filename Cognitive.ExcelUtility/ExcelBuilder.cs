@@ -172,6 +172,7 @@ namespace Cognitive.ExcelUtility
 
             style.Alignment = HorizontalAlignment.Center;
             style.VerticalAlignment = VerticalAlignment.Center;
+            style.WrapText = true;
 
             return style;
         }

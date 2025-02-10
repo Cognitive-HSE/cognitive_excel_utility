@@ -19,10 +19,10 @@ namespace Cognitive.ExcelUtility.DalPg.Managers
                 LeadHand = await reader.GetFieldValueAsync<string?>("lead_hand"),
                 Diseases = await reader.GetFieldValueAsync<string?>("diseases"),
                 Smoking = await reader.GetFieldValueAsync<bool?>("smoking"),
-                Alcohol = await reader.GetFieldValueAsync<bool?>("alcohol"),
+                Alcohol = await reader.GetFieldValueAsync<string?>("alcohol"),
                 Sport = await reader.GetFieldValueAsync<string?>("sport"),
                 Insomnia = await reader.GetFieldValueAsync<bool?>("insomnia"),
-                CurrentHealth = await reader.GetFieldValueAsync<string?>("current_health"),
+                CurrentHealth = await reader.GetFieldValueAsync<short?>("current_health"),
                 Gaming = await reader.GetFieldValueAsync<bool?>("gaming")
             });
         }

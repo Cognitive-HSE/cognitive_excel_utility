@@ -67,10 +67,10 @@ namespace Cognitive.ExcelUtility
                 user?.LeadHand,
                 user?.Diseases,
                 user?.Smoking.ToCsvFormat(),
-                user?.Alcohol.ToCsvFormat(),
+                user?.Alcohol,
                 user?.Sport,
                 user?.Insomnia.ToCsvFormat(),
-                user?.CurrentHealth,
+                user?.CurrentHealth.ToString(),
                 user?.Gaming.ToCsvFormat(),
                 test.TestId.ToString(),
                 test.TryNumber.ToString(),
@@ -80,7 +80,7 @@ namespace Cognitive.ExcelUtility
                 test.NumberAllAnswers.ToString()
             ];
 
-            return string.Join(';', line);
+            return string.Join(';', line).ToString(CultureInfo.InvariantCulture);
         }
 
         private static async Task<List<TestResultEntity>> GetTestResults()

@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Text;
+﻿using System.Text;
 using Cognitive.ExcelUtility.DalPg.Base;
 
 namespace Cognitive.ExcelUtility
@@ -20,7 +19,7 @@ namespace Cognitive.ExcelUtility
             if (isDataset)
             {
                 var csv = CsvBuilder.BuildDataset();
-                var bytes = new UTF8Encoding(false).GetBytes(csv);
+                var bytes = Encoding.UTF8.GetBytes(csv);
                 using var fileStream = new FileStream(path, FileMode.Create);
                 fileStream.Write(bytes, 0, bytes.Length);
             }
