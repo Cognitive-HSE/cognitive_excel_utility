@@ -7,8 +7,8 @@ namespace Cognitive.ExcelUtility
     {
         public static void Main(string[] args)
         {
-            var isDev = args.Contains("--dev");
-            var isDataset = args.Contains("--dataset");
+            var isDev = false;// args.Contains("--dev");
+            var isDataset = true; //args.Contains("--dataset");
             
             DbHelper.BuildDataSource(isDev);
 

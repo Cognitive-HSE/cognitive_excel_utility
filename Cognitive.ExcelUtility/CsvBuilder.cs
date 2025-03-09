@@ -50,50 +50,65 @@ namespace Cognitive.ExcelUtility
                 "number_correct_answers",
                 "number_all_answers"
             };
-            return string.Join(';', headers);
+            return string.Join(',', headers);
         }
 
         private static string BuildLine(UserEntity? user, TestResultEntity test)
         {
             string?[] line =
             {
-                user?.UserId.ToString(),
-                user?.Age.ToString(),
-                user?.Education,
-                user?.Speciality,
-                user?.Residence,
-                user?.Height.ToString(),
-                user?.Weight.ToString(),
-                user?.LeadHand,
-                user?.Diseases,
+                user?.UserId.ToCsvFormat(),
+                user?.Age.ToCsvFormat(),
+                user?.Education.ToCsvFormat(),
+                user?.Speciality.ToCsvFormat(),
+                user?.Residence.ToCsvFormat(),
+                user?.Height.ToCsvFormat(),
+                user?.Weight.ToCsvFormat(),
+                user?.LeadHand.ToCsvFormat(),
+                user?.Diseases.ToCsvFormat(),
                 user?.Smoking.ToCsvFormat(),
-                user?.Alcohol,
-                user?.Sport,
+                user?.Alcohol.ToCsvFormat(),
+                user?.Sport.ToCsvFormat(),
                 user?.Insomnia.ToCsvFormat(),
-                user?.CurrentHealth.ToString(),
+                user?.CurrentHealth.ToCsvFormat(),
                 user?.Gaming.ToCsvFormat(),
-                test.TestId.ToString(),
-                test.TryNumber.ToString(),
-                test.Accuracy.ToString(),
+                test.TestId.ToCsvFormat(),
+                test.TryNumber.ToCsvFormat(),
+                test.Accuracy.ToCsvFormat(),
                 test.CompleteTime.ToCsvFormat(),
-                test.NumberCorrectAnswers.ToString(),
-                test.NumberAllAnswers.ToString()
+                test.NumberCorrectAnswers.ToCsvFormat(),
+                test.NumberAllAnswers.ToCsvFormat()
             };
 
-            return string.Join(';', line).ToString(CultureInfo.InvariantCulture);
+            return string.Join(',', line).ToString(CultureInfo.InvariantCulture);
         }
 
         private static async Task<List<TestResultEntity>> GetTestResults()
         {
             return await new TestResultManager().ReadAll();
         }
+
         private static async Task<List<UserEntity>> GetUsers()
         {
             return await new UserManager().ReadAll();
         }
 
-        private static string ToCsvFormat(this bool? val) => val != null && val.Value ? "1" : val != null ? "0" : "";
+        private static string ToCsvFormat(this object? val)
+        {
+            if (val == null) return "-";
 
-        private static string ToCsvFormat(this TimeSpan? val) => val != null ? val.Value.TotalSeconds.ToString(CultureInfo.InvariantCulture) : "";
+            if (val is bool b) return b ? "1" : "0";
+
+            if (val is TimeSpan ts) return ts.TotalSeconds.ToString(CultureInfo.InvariantCulture);
+
+            if (val is string s) return string.IsNullOrEmpty(s) ? "-" : $"\"{s}\"";
+
+            if (val is short sh) return sh.ToString();
+            if (val is int i) return i.ToString();
+            if (val is long l) return l.ToString();
+            if (val is decimal d) return d.ToString(CultureInfo.InvariantCulture);
+
+            return "-";
+        }
     }
 }
